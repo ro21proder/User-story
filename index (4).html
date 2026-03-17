@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>User Story Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#1F3864;--navy-light:#2E4A7A;--paper:#f8f7f4;
+    --border:rgba(31,56,100,0.13);--border-strong:rgba(31,56,100,0.28);
+    --text:#1a1a2e;--muted:#6b6b7e;
+    --accent:#c8a96e;--accent-muted:rgba(200,169,110,0.13);
+    --success-bg:#e8f5ee;--success:#2d7a4f;
+    --error-bg:#fdeaea;--error:#b53b3b;
+    --fd:'Syne',sans-serif;--fm:'DM Mono',monospace;
+  }
+  body{background:var(--paper);font-family:var(--fd);color:var(--text);min-height:100vh}
+  .shell{max-width:680px;margin:0 auto;padding:2.5rem 1.5rem 5rem}
+  .header{margin-bottom:2.25rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+  .badge{background:var(--navy);color:#fff;font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:3px;font-family:var(--fm);display:inline-block;margin-bottom:7px}
+  .title{font-size:22px;font-weight:700;color:var(--navy)}
+  .sub{font-size:12px;color:var(--muted);font-family:var(--fm);margin-top:3px}
+  .fg{margin-bottom:1.1rem}
+  .lbl{font-size:11px;font-weight:500;color:var(--navy);font-family:var(--fm);margin-bottom:5px;display:flex;justify-content:space-between}
+  .opt{font-size:10px;color:var(--muted);font-weight:400}
+  input[type=text],input[type=url]{width:100%;background:#fff;border:.5px solid var(--border-strong);border-radius:7px;padding:9px 12px;font-size:13.5px;font-family:var(--fd);color:var(--text);outline:none;transition:border-color .15s}
+  textarea{width:100%;background:#fff;border:.5px solid var(--border-strong);border-radius:7px;padding:10px 12px;font-size:13.5px;font-family:var(--fd);color:var(--text);outline:none;resize:vertical;line-height:1.65;transition:border-color .15s}
+  input[type=text]:focus,input[type=url]:focus,textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(31,56,100,.07)}
+  .btn-gen{width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:13px 24px;font-size:14px;font-weight:700;font-family:var(--fd);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:.25rem;transition:background .15s,transform .1s}
+  .btn-gen:hover:not(:disabled){background:var(--navy-light)}
+  .btn-gen:active:not(:disabled){transform:scale(.99)}
+  .btn-gen:disabled{opacity:.5;cursor:not-allowed}
+  .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .status{font-size:12px;font-family:var(--fm);padding:8px 12px;border-radius:7px;margin-top:.75rem;display:none;align-items:center;gap:8px}
+  .status.error{display:flex;background:var(--error-bg);color:var(--error)}
+  .status.ok{display:flex;background:var(--success-bg);color:var(--success)}
+  .out{margin-top:2rem;display:none}
+  .out.visible{display:block}
+  .out-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+  .out-lbl{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);font-family:var(--fm)}
+  .btn-dl{display:flex;align-items:center;gap:6px;background:var(--accent-muted);border:.5px solid var(--accent);color:#7a5c1e;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:500;font-family:var(--fd);cursor:pointer;transition:background .15s}
+  .btn-dl:hover{background:rgba(200,169,110,.3)}
+  .doc{background:#fff;border:.5px solid var(--border-strong);border-radius:12px;padding:1.75rem 2rem;line-height:1.8;font-size:14px;color:var(--text)}
+  .doc h1{font-size:19px;font-weight:700;color:var(--text);margin-bottom:1.25rem;padding-bottom:.7rem;border-bottom:2px solid var(--navy)}
+  .doc h2{font-size:12px;font-weight:700;color:var(--navy);margin-top:1.6rem;margin-bottom:.45rem;text-transform:uppercase;letter-spacing:.08em}
+  .doc h3{font-size:13.5px;font-weight:700;color:var(--navy-light);margin-top:1.1rem;margin-bottom:.3rem}
+  .doc ul{padding-left:1.2rem;margin-bottom:.4rem}
+  .doc li{margin-bottom:4px}
+  .doc p{margin-bottom:.4rem}
+  .cursor{display:inline-block;width:2px;height:1em;background:var(--navy);margin-left:2px;vertical-align:text-bottom;animation:blink .9s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="header">
+    <div><span class="badge">PM Toolkit</span></div>
+    <div class="title" style="margin-top:6px">User Story Generator</div>
+    <div class="sub">Web · powered by Gemini</div>
+  </div>
+
+  <div class="fg">
+    <div class="lbl">Feature name</div>
+    <input type="text" id="featureName" placeholder="e.g. Saved Prompts Library, Chat History, Cost Query Handling"/>
+  </div>
+  <div class="fg">
+    <div class="lbl">Key actions <span class="opt">what the user can do</span></div>
+    <textarea id="keyActions" rows="4" placeholder="One action per line.
+
+e.g.
+Save a prompt by clicking the save icon below a sent message
+Add a title, category, and edit the prompt text in a popup
+Create a new category inline without navigating away
+Reuse a saved prompt from the left sidebar panel"></textarea>
+  </div>
+  <div class="fg">
+    <div class="lbl">System messages <span class="opt">optional</span></div>
+    <textarea id="systemMessages" rows="3" placeholder="Exact UI copy, toasts, confirmations, error text.
+
+e.g.
+Success toast: 'Prompt saved successfully'
+Delete confirm: 'Are you sure? This action cannot be undone.'
+Empty state: 'No saved prompts yet.'"></textarea>
+  </div>
+  <div class="fg">
+    <div class="lbl">Constraints &amp; guardrails <span class="opt">optional</span></div>
+    <textarea id="constraints" rows="3" placeholder="Rules, limits, permissions, edge cases.
+
+e.g.
+Max 100 saved prompts per user
+Prompt title must not exceed 80 characters
+If network drops mid-save — show retry, do not lose draft"></textarea>
+  </div>
+  <div class="fg">
+    <div class="lbl">Design reference <span class="opt">optional</span></div>
+    <input type="url" id="designRef" placeholder="https://figma.com/file/… or a note like 'Refer to Screen 3'"/>
+  </div>
+
+  <button class="btn-gen" id="genBtn" onclick="generate()">
+    <span id="btnTxt">Generate User Story</span>
+  </button>
+  <div class="status" id="status"></div>
+
+  <div class="out" id="out">
+    <div class="out-header">
+      <div class="out-lbl">Output</div>
+      <button class="btn-dl" id="dlBtn">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 10.5L4 6.5h3V2h2v4.5h3L8 10.5z" fill="currentColor"/><rect x="2" y="12" width="12" height="1.5" rx=".75" fill="currentColor"/></svg>
+        Download .docx
+      </button>
+    </div>
+    <div class="doc" id="doc"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<script>
+let lastText = '', lastName = '';
+
+function val(id){ return document.getElementById(id).value.trim(); }
+
+function buildPrompt(){
+  const parts = [];
+  const name    = val('featureName');
+  const actions = val('keyActions');
+  const sysMsgs = val('systemMessages');
+  const constr  = val('constraints');
+  const design  = val('designRef');
+  if(name)    parts.push(`Feature name: ${name}`);
+  parts.push(`Platform: Web`);
+  if(actions) parts.push(`\nKey actions:\n${actions}`);
+  if(sysMsgs) parts.push(`\nSystem messages / UI copy:\n${sysMsgs}`);
+  if(constr)  parts.push(`\nConstraints and guardrails:\n${constr}`);
+  if(design)  parts.push(`\nDesign reference: ${design}`);
+  return parts.join('\n');
+}
+
+function renderMd(t){
+  return t
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m=>'<ul>'+m+'</ul>')
+    .replace(/\n{2,}/g,'\n')
+    .replace(/^(?!<[hul])(.+)$/gm, m=>m.trim()?'<p>'+m+'</p>':'');
+}
+
+function showStatus(msg,type){ const s=document.getElementById('status'); s.className='status '+type; s.textContent=msg; }
+function clearStatus(){ document.getElementById('status').className='status'; }
+
+async function generate(){
+  if(!val('featureName') && !val('keyActions')){ showStatus('Please enter a feature name or key actions.','error'); return; }
+  clearStatus();
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner"></div><span>Generating…</span>';
+  const outEl=document.getElementById('out');
+  const docEl=document.getElementById('doc');
+  outEl.classList.add('visible');
+  docEl.innerHTML='<span class="cursor"></span>';
+  try{
+    const resp = await fetch('/.netlify/functions/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: buildPrompt() })
+    });
+    const data = await resp.json();
+    if(!resp.ok) throw new Error(data.error || 'Something went wrong');
+    const full = data.text || '';
+    docEl.innerHTML = renderMd(full);
+    lastText = full;
+    const m = full.match(/^#\s+(.+)$/m);
+    lastName = m ? m[1].trim() : (val('featureName') || 'User Story');
+    showStatus('User story generated successfully.','ok');
+    outEl.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    outEl.classList.remove('visible');
+    showStatus(e.message||'Something went wrong. Please try again.','error');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<span id="btnTxt">Generate User Story</span>';
+  }
+}
+
+async function downloadDocx(){
+  if(!lastText) return;
+  const {Document,Packer,Paragraph,TextRun}=window.docx;
+  const N='1F3864',NL='2E4A7A';
+  const kids=[];
+  for(const line of lastText.split('\n')){
+    const t=line.trim();
+    if(!t){kids.push(new Paragraph({text:''}));continue;}
+    if(t.startsWith('# '))
+      kids.push(new Paragraph({children:[new TextRun({text:t.slice(2),bold:true,size:40,font:'Calibri',color:'000000'})],spacing:{after:240}}));
+    else if(t.startsWith('## '))
+      kids.push(new Paragraph({children:[new TextRun({text:t.slice(3),bold:true,size:28,font:'Calibri',color:N})],spacing:{before:280,after:160}}));
+    else if(t.startsWith('### '))
+      kids.push(new Paragraph({children:[new TextRun({text:t.slice(4),bold:true,size:24,font:'Calibri',color:NL})],spacing:{before:200,after:120}}));
+    else if(t.startsWith('- '))
+      kids.push(new Paragraph({children:[new TextRun({text:t.slice(2),font:'Calibri',size:22,color:'000000'})],bullet:{level:0},spacing:{after:60}}));
+    else
+      kids.push(new Paragraph({children:[new TextRun({text:t,font:'Calibri',size:22,color:'000000'})],spacing:{after:80}}));
+  }
+  const d=new Document({sections:[{properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},children:kids}]});
+  const blob=await Packer.toBlob(d);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=(lastName.replace(/[^a-z0-9 ]/gi,'').replace(/\s+/g,'_')||'user_story')+'.docx';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('dlBtn').addEventListener('click', downloadDocx);
+</script>
+</body>
+</html>
